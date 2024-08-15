@@ -70,14 +70,18 @@ pub fn get_current_afk_event() -> AwEvent {
 }
 
 pub fn assign_idle_timeout(globals: &wayland_client::GlobalManager,
-                           timeout_ms: u32) -> () {
+                           timeout_ms: u32) -> Result<(), String> {
     init_afk_state(timeout_ms);
     let seat = globals.instantiate_exact::<WlSeat>(1)
-        .expect("Wayland session does not expose a WlSeat object, \
-                 this window manager is most likely not supported");
+        .map_err(|_|
+            String::from("Wayland session does not expose a WlSeat object, \
+                         this window manager is most likely not supported")
+        )?;
     let idle = globals.instantiate_exact::<Idle>(1)
-        .expect("Wayland session does not expose a Idle object, \
-                 this window manager is most likely not supported");
+        .map_err(|_|
+            String::from("Wayland session does not expose a Idle object, this \
+                         window manager is most likely not supported")
+        )?;
     let idle_timeout = idle.get_idle_timeout(&seat, timeout_ms);
     idle_timeout.assign_mono(|_idle_timeout, event| {
         match event {
@@ -92,4 +96,5 @@ pub fn assign_idle_timeout(globals: &wayland_client::GlobalManager,
             _ => panic!("Got unexpected timeout event"),
         }
     });
+    Ok(())
 }

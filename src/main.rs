@@ -92,7 +92,14 @@ fn main() {
     current_window::assign_toplevel_manager(&globals);
 
     println!("### Setting up idle timeout");
-    idle::assign_idle_timeout(&globals, 120000);
+    let idle_result = idle::assign_idle_timeout(&globals, 120000);
+    let is_idle_active = match idle_result {
+        Ok(_) => true,
+        Err(err_str) => {
+            eprintln!("{}", err_str);
+            false
+        }
+    };
 
     println!("### Syncing roundtrip");
     event_queue
@@ -172,10 +179,12 @@ fn main() {
                         },
                     }
 
-                    let afk_event = idle::get_current_afk_event();
-                    if client.heartbeat(&afk_bucket, &afk_event, HEARTBEAT_INTERVAL_MARGIN_S).is_err() {
-                        println!("Failed to send heartbeat");
-                        break;
+                    if is_idle_active {
+                        let afk_event = idle::get_current_afk_event();
+                        if client.heartbeat(&afk_bucket, &afk_event, HEARTBEAT_INTERVAL_MARGIN_S).is_err() {
+                            println!("Failed to send heartbeat");
+                            break;
+                        }
                     }
                 },
                 TIMER => {
@@ -190,12 +199,13 @@ fn main() {
                         }
                     }
 
-                    let afk_event = idle::get_current_afk_event();
-                    if client.heartbeat(&afk_bucket, &afk_event, HEARTBEAT_INTERVAL_MARGIN_S).is_err() {
-                        println!("Failed to send heartbeat");
-                        break;
+                    if is_idle_active {
+                        let afk_event = idle::get_current_afk_event();
+                        if client.heartbeat(&afk_bucket, &afk_event, HEARTBEAT_INTERVAL_MARGIN_S).is_err() {
+                            println!("Failed to send heartbeat");
+                            break;
+                        }
                     }
-
                 },
                 _ => panic!("Invalid token!")
             }
