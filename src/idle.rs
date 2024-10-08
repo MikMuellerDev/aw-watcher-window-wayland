@@ -8,8 +8,6 @@ use chrono::{DateTime, Duration};
 use aw_client_rust::Event as AwEvent;
 
 use wayland_client::protocol::wl_seat::WlSeat;
-use wl_client::idle::org_kde_kwin_idle::OrgKdeKwinIdle as Idle;
-use wl_client::idle::org_kde_kwin_idle_timeout::Event as TimeoutEvent;
 
 struct AfkState {
     is_afk: bool,
@@ -69,27 +67,63 @@ pub fn get_current_afk_event() -> AwEvent {
     }
 }
 
-pub fn assign_idle_timeout(globals: &wayland_client::GlobalManager,
+pub fn assign_kde_idle_timeout(globals: &wayland_client::GlobalManager,
                            timeout_ms: u32) -> Result<(), String> {
+    use wl_client::kde_idle::org_kde_kwin_idle::OrgKdeKwinIdle as KdeIdle;
+    use wl_client::kde_idle::org_kde_kwin_idle_timeout::Event as KdeTimeoutEvent;
+
     init_afk_state(timeout_ms);
     let seat = globals.instantiate_exact::<WlSeat>(1)
         .map_err(|_|
             String::from("Wayland session does not expose a WlSeat object, \
                          this window manager is most likely not supported")
         )?;
-    let idle = globals.instantiate_exact::<Idle>(1)
+    let idle = globals.instantiate_exact::<KdeIdle>(1)
         .map_err(|_|
-            String::from("Wayland session does not expose a Idle object, this \
+            String::from("Wayland session does not expose a KdeIdle object, this \
                          window manager is most likely not supported")
         )?;
     let idle_timeout = idle.get_idle_timeout(&seat, timeout_ms);
     idle_timeout.assign_mono(|_idle_timeout, event| {
         match event {
-            TimeoutEvent::Idle => {
+            KdeTimeoutEvent::Idle => {
                 println!("idle");
                 set_afk_state(true);
             },
-            TimeoutEvent::Resumed => {
+            KdeTimeoutEvent::Resumed => {
+                println!("resumed");
+                set_afk_state(false);
+            },
+            _ => panic!("Got unexpected timeout event"),
+        }
+    });
+    Ok(())
+}
+
+pub fn assign_ext_idle_notify(globals: &wayland_client::GlobalManager,
+                           timeout_ms: u32) -> Result<(), String> {
+    use wl_client::ext_idle::ext_idle_notifier_v1::ExtIdleNotifierV1 as IdleNotifier;
+    use wl_client::ext_idle::ext_idle_notification_v1::Event as Event;
+
+    init_afk_state(timeout_ms);
+    let seat = globals.instantiate_exact::<WlSeat>(1)
+        .map_err(|_|
+            String::from("Wayland session does not expose a WlSeat object, \
+                         this window manager is most likely not supported")
+        )?;
+    let idle = globals.instantiate_exact::<IdleNotifier>(1)
+        .map_err(|_|
+            String::from("Wayland session does not expose a ExtIdleNotifier object, this \
+                         window manager is most likely not supported")
+        )?;
+    let idle_timeout = idle.get_idle_notification(timeout_ms, &seat);
+    idle_timeout.assign_mono(|_idle_timeout, event| {
+        match event {
+            Event::Idled => {
+                println!("idle");
+                set_afk_state(true);
+            },
+            Event::Resumed => {
                 println!("resumed");
                 set_afk_state(false);
             },

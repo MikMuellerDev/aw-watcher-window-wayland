@@ -23,7 +23,7 @@ pub mod toplevel_management {
     include!("protocols/wlr-foreign-toplevel-management.rs");
 }
 
-pub mod idle {
+pub mod kde_idle {
     pub(crate) use smallvec;
     pub(crate) use wayland_sys as sys;
     pub(crate) use wayland_client::{AnonymousObject, Interface, Main, Proxy, ProxyMap};
@@ -33,4 +33,15 @@ pub mod idle {
     pub(crate) use wayland_commons::wire::{Argument, ArgumentType, Message, MessageDesc};
 
     include!("protocols/idle.rs");
+}
+pub mod ext_idle {
+    pub(crate) use smallvec;
+    pub(crate) use wayland_sys as sys;
+    pub(crate) use wayland_client::{AnonymousObject, Interface, Main, Proxy, ProxyMap};
+    pub(crate) use wayland_client::protocol::{wl_surface, wl_region, wl_seat, wl_output};
+    pub(crate) use wayland_commons::{MessageGroup};
+    pub(crate) use wayland_commons::map::{Object, ObjectMetadata};
+    pub(crate) use wayland_commons::wire::{Argument, ArgumentType, Message, MessageDesc};
+
+    include!("protocols/ext-idle-notify-v1.rs");
 }

@@ -11,6 +11,8 @@ fn main() {
          "./src/protocols/wlr-foreign-toplevel-management.rs"),
         ("./protocols/idle.xml",
          "./src/protocols/idle.rs"),
+        ("./protocols/ext-idle-notify-v1.xml",
+         "./src/protocols/ext-idle-notify-v1.rs"),
     );
 
     // Create "./src/protocols" folder for generated bindings

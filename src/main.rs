@@ -92,14 +92,26 @@ fn main() {
     current_window::assign_toplevel_manager(&globals);
 
     println!("### Setting up idle timeout");
-    let idle_result = idle::assign_idle_timeout(&globals, 120000);
-    let is_idle_active = match idle_result {
+    let mut is_idle_active = match idle::assign_ext_idle_notify(&globals, 120000) {
         Ok(_) => true,
         Err(err_str) => {
             eprintln!("{}", err_str);
             false
         }
     };
+    if !is_idle_active {
+        is_idle_active = match idle::assign_kde_idle_timeout(&globals, 120000) {
+            Ok(_) => true,
+            Err(err_str) => {
+                eprintln!("{}", err_str);
+                false
+            }
+        };
+    }
+    if !is_idle_active {
+        eprintln!("Wayland session does not expose any protocols to handle idle status, this \
+                   window manager is most likely not supported")
+    }
 
     println!("### Syncing roundtrip");
     event_queue
