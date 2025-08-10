@@ -65,8 +65,8 @@
         };
 
         packages = {
-          aw-wayland = pkgs.rustPlatform.buildRustPackage {
-            pname = "wayland-test";
+           aw-wayland = pkgs.rustPlatform.buildRustPackage {
+            pname = "aw-wayland";
             version = "0.1.0";
 
             src = ./.;  # assumes your Rust project is in the flake root
@@ -93,5 +93,8 @@
             # postInstall = wrapProgram "$out/bin/wayland-test \ --set WAYLAND_PROTOCOLS ${pkgs.wayland-protocols}/share/wayland-protocols"
           };
         };
+
+        defaultPackage = self.packages.x86_64-linux.aw-wayland;
+        # defaultPackage.x86_64-linux = self.packages.x86_64-linux.aw-wayland;
       });
 }
