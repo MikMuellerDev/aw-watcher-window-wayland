@@ -65,7 +65,7 @@
         };
 
         packages = {
-          waylandTest = pkgs.rustPlatform.buildRustPackage {
+          aw-wayland = pkgs.rustPlatform.buildRustPackage {
             pname = "wayland-test";
             version = "0.1.0";
 
