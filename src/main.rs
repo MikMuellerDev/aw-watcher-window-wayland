@@ -78,11 +78,10 @@ fn main() {
         return;
     }
     // Always testing mode with "cargo run", enable testing on release build with --testing
-    // let mut testing = cfg!(debug_assertions);
-    // if matches.opt_present("testing") {
-    //     testing = true;
-    // }
-    let testing = false;
+    let mut testing = cfg!(debug_assertions);
+    if matches.opt_present("testing") {
+        testing = true;
+    }
 
     println!("### Setting up display");
     let display = get_wl_display();
