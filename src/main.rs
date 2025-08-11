@@ -17,9 +17,9 @@ mod idle;
 mod singleinstance;
 mod wl_client;
 
+use std::env;
 use std::os::unix::io::AsRawFd;
 use std::time::Duration;
-use std::{env, thread};
 
 use mio::unix::EventedFd;
 use mio::{Events, Poll, PollOpt, Ready, Token};
@@ -28,20 +28,19 @@ use timerfd::{SetTimeFlags, TimerFd, TimerState};
 use chrono::prelude::*;
 use serde_json::{Map, Value};
 
-fn get_wl_display() -> Result<wayland_client::Display, String> {
+fn get_wl_display() -> wayland_client::Display {
     match wayland_client::Display::connect_to_env() {
-        Ok(display) => return Ok(display),
+        Ok(display) => return display,
         Err(e) => println!("Couldn't connect to wayland display by env: {}", e),
     };
     match wayland_client::Display::connect_to_name("wayland-0") {
-        Ok(display) => return Ok(display),
+        Ok(display) => return display,
         Err(e) => println!(
             "Couldn't connect to wayland display by name 'wayland-0': {}",
             e
         ),
     }
-
-    return Err("Failed to connect to wayland display".to_string());
+    panic!("Failed to connect to wayland display");
 }
 
 fn window_to_event(window: &current_window::Window) -> aw_client_rust::Event {
@@ -85,15 +84,7 @@ fn main() {
     }
 
     println!("### Setting up display");
-    let display = loop {
-        match get_wl_display() {
-            Ok(disp) => break disp,
-            Err(e) => {
-                println!("Wayland connect error: {e}");
-                thread::sleep(Duration::from_secs(5));
-            }
-        }
-    };
+    let display = get_wl_display();
     let mut event_queue = display.create_event_queue();
     let attached_display = (*display).clone().attach(event_queue.get_token());
 
